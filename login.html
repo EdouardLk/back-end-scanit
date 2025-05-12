@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        form input,
+        form select,
+        form button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        form button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        form button:hover {
+            background-color: #0056b3;
+        }
+
+        #result {
+            text-align: center;
+            margin-top: 10px;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+    <form id="form">
+        <h1>Connexion</h1>
+        <input type="text" name="email" placeholder="email" required>
+        <input type="password" name="password" placeholder="password..." required>
+        <button type="submit">Connexion</button>
+    </form>
+
+    <script type="text/javascript">
+        let emailAndPassword = null;
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            emailAndPassword = {
+                email: form.email.value,
+                password: form.password.value
+            };
+            console.log(JSON.stringify(emailAndPassword));
+
+            //console.log(emailAndPassword);
+            fetch('http://localhost:5000/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(emailAndPassword)
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                localStorage.setItem("token", `${data.token}`);
+                //localStorage.setItem("userId", `${data.userId}`);
+            });
+        })
+
+    </script>
+</body>
+
+</html>

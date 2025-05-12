@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./testRequests.js" type="module" defer></script>
+    <style>
+        body{
+            background-color: aliceblue;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #container{
+            width: 60%;
+        }
+        
+        section{
+            border: solid black 1.5px;
+            background-color: white;
+            padding: 5px;
+            display: flex;
+            justify-content: center;
+        }
+
+        
+        
+        div.buttonWrapper{
+            border:solid lightgray 1.5px;
+            padding: 5px;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        button.fetch-button{
+            margin-bottom: 1rem;
+            background-color: cornflowerblue;
+            border-radius: 5px;
+            width: auto;
+            padding: 10px;
+            margin: 5px;
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+        }
+
+        button.fetch-button:hover{
+            cursor: pointer;
+            color: blanchedalmond;
+        }
+        
+        div.resultWrapper{
+            border:solid lightgray 1.5px;
+            padding: 5px;
+            width: 80%;
+        }
+
+        .resultWrapper p{
+            font-size: 1.2rem;
+        }
+
+    </style>
+</head>
+<body>    
+    <div id="container">
+        <h1>Ouvre la console le sang</h1>
+        <h2>CV</h2>
+        <section>
+            <div class="buttonWrapper"><button id="Ping" class="fetch-button">Ping</button></div>
+            <div class="resultWrapper"><span>Résultat :</span><p>....</p></div>
+        </section>        
+        <section>
+            <div class="buttonWrapper"><button id="GetAllCvs" class="fetch-button">All CV</button></div>
+            <div class="resultWrapper"><span>Résultat :</span><p>....</p></div>
+        </section>        
+        <section>
+            <div class="buttonWrapper"><button id="GetCvById" class="fetch-button">CV By Id</button></div>
+            <div class="resultWrapper"><span>Résultat :</span><p >....</p></div>
+        </section>
+        <section>
+            <div class="buttonWrapper"><button id="GetCvByUser" class="fetch-button">CV By UserId</button></div>
+            <div class="resultWrapper"><span>Résultat :</span><p >....</p></div>
+        </section>
+        <section>
+            <div class="buttonWrapper"><button id="CreateCv" class="fetch-button">Create Cv</button></div>
+            <div class="resultWrapper"><span>Résultat :</span><p >....</p></div>
+        </section>
+    
+        <section>
+            <div class="buttonWrapper"><button id="UpdateCv" class="fetch-button">Update Cv</button></div>
+            <div class="resultWrapper"><span>Résultat :</span><p >....</p></div>
+        </section>
+    
+        <section>
+            <div class="buttonWrapper"><button id="DeleteCv" class="fetch-button">Delete Cv</button></div>
+            <div class="resultWrapper"><span>Résultat :</span><p >....</p></div>
+        </section>
+    
+        <!-- <section>
+            <div class="buttonWrapper"><button id="Login" class="fetch-button">Login</button></div>
+            <div class="resultWrapper"><span>Résultat :</span><p >....</p></div>
+        </section> -->
+    
+    </div>
+
+    <script>
+        
+    </script>
+</body>
+</html>

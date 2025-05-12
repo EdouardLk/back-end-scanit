@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Créer un compte</title>
+</head>
+<body>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .form-container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    form input,
+    form select,
+    form button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    form button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    form button:hover {
+      background-color: #0056b3;
+    }
+
+    #result {
+      text-align: center;
+      margin-top: 10px;
+      color: #e74c3c;
+      font-weight: bold;
+    }
+  </style>
+  <div class="form-container">
+    <h1>Créer un compte</h1>
+    <form id="registerForm">
+      <input type="text" name="firstName" placeholder="Prénom" required>
+      <input type="text" name="lastName" placeholder="Nom" required>
+      <input type="text" name="userName" placeholder="Nom d'utilisateur" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Mot de passe" required>
+      <input type="tel" name="phone" placeholder="Téléphone" required>
+      
+      <select name="role" required>
+        <option value="user" selected>Utilisateur</option>
+        <option value="admin">Admin</option>
+        <option value="moderator">Modérateur</option>
+      </select>
+     
+      <button type="submit">Créer le compte</button>
+    </form>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const data = {
+        firstName: form.firstName.value,
+        lastName: form.lastName.value,
+        userName: form.userName.value,
+        email: form.email.value,
+        password: form.password.value,
+        phone: form.phone.value,
+        role: form.role.value,
+        tier: form.tier.value
+      };
+
+      try {
+        const response = await fetch('http://localhost:7000/api/users/create/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        document.getElementById('result').textContent = response.ok
+          ? '✅ Utilisateur créé avec succès !'
+          : `❌ Erreur : ${result.message}`;
+
+      } catch (err) {
+        document.getElementById('result').textContent = '❌ Erreur de requête : ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
