@@ -77,11 +77,11 @@ exports.login = async (req, res) => { // cette routes doit être appelée par le
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        username: user.userName,
+        userName: user.userName,
         credits: user.credits,
         phone: user.phone,
         role: user.role, // admin / moderator / paysans (user) lol
-        tier: user.email, //premium ou freemium
+        tier: user.tier, // Correction : on utilise le champ tier au lieu de l'email
       },
       //token : token
     });
@@ -105,8 +105,11 @@ exports.createUser = async (req, res) => {
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // CORRECTION : Il est important d'inclure l'email ici, sinon on aurait l'erreur
+    // "users validation failed: email: Path `email` is required"
     const newUser = new User({
       ...rest,
+      email,
       password: hashedPassword
     });
 
@@ -120,10 +123,15 @@ exports.createUser = async (req, res) => {
 // Mettre à jour un utilisateur
 exports.updateUser = async (req, res) => {
   try {
+    console.log(req.body);
     let isAutorized = (req.user.role == "admin" || req.user.role == "moderator" || req.user.id == req.params.id); // depuis le token
 
     if (!isAutorized) {
       return res.status(401).json({ message: "Unauthorized : Cet Utilisateur n'est pas autoriser à modifer les informations d'un autre utilisateur" });
+    }
+
+    if (req.body.password) {
+     req.body.password = await bcrypt.hash(req.body.password, 10);
     }
 
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });

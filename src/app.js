@@ -13,7 +13,7 @@ app.use(helmet());
 
 // Autoriser les requêtes cross-origin (CORS)
 app.use(cors({
-    origin: [ "*", process.env.AUTH_SERVICE_URL, "http://127.0.0.1:5500"  ]
+    origin: [ "*", process.env.AUTH_SERVICE_URL, "http://127.0.0.1:5500", "http://localhost:5500" ]
 }));
 
 // Logger les requêtes HTTP
