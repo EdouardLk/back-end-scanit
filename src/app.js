@@ -13,7 +13,17 @@ app.use(helmet());
 
 // Autoriser les requêtes cross-origin (CORS)
 app.use(cors({
-    origin: [ "*", process.env.AUTH_SERVICE_URL, "http://127.0.0.1:5500", "http://localhost:5500" ]
+    origin: [
+        process.env.AUTH_SERVICE_URL,
+        process.env.AUTH_SERVICE_URL.replace('http://', 'http://127.0.0.1:'),
+        process.env.FRONTEND_URL,
+        process.env.FRONTEND_URL.replace('http://', 'http://127.0.0.1:'),
+        'http://localhost:5500',
+        'http://127.0.0.1:5500'
+    ].filter(Boolean),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Logger les requêtes HTTP
@@ -31,13 +41,13 @@ app.use((req, res, next) => {
 const userRoutes = require('./routes/user.routes');
 const templateRoutes = require('./routes/template.routes');
 const templateUserRoutes = require('./routes/templateUser.routes');
-const CvRoutes = require('./routes/cv.routes');
+const cvRoutes = require('./routes/cv.routes');
 
 
 app.use('/api/users', userRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/templatesUsers', templateUserRoutes);
-app.use('/api/cv', CvRoutes);
+app.use('/api/cv', cvRoutes);
 
 app.get("/api/ping", (req, res) => {
     res.json({message :"✅ Serveur Express fonctionne !"});
