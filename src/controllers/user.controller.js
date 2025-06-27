@@ -130,8 +130,25 @@ exports.updateUser = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized : Cet Utilisateur n'est pas autoriser à modifer les informations d'un autre utilisateur" });
     }
 
-    if (req.body.password) {
-     req.body.password = await bcrypt.hash(req.body.password, 10);
+    // Si la requête contient un nouveau mot de passe
+    if (req.body.newPassword) {
+      // Récupérer l'utilisateur pour vérifier son mot de passe actuel
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      // Vérifier le mot de passe actuel
+      const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Le mot de passe actuel est incorrect" });
+      }
+
+      // Hasher le nouveau mot de passe
+      req.body.password = await bcrypt.hash(req.body.newPassword, 10);
+      // Supprimer les champs supplémentaires pour ne pas les sauvegarder
+      delete req.body.newPassword;
+      delete req.body.currentPassword;
     }
 
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
