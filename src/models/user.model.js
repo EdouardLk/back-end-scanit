@@ -35,10 +35,18 @@ const UserSchema = new mongoose.Schema({
      required: true,
      enum: ['user', 'admin', 'moderator'],
      default: 'user' },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  isGoogleUser: {
+    type: Boolean,
+    default: false
+  },
   tier: { 
     type: String,
      required: true,
-     enum: ['freemium', 'premium'],
+     enum: ['freemium', 'premium' , 'ultra'],
      default: 'freemium' }
 }, { timestamps: true });
 

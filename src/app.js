@@ -12,7 +12,7 @@ const app = express();
 app.use(helmet());
 
 // Autoriser les requêtes cross-origin (CORS)
-app.use(cors({
+app.use(cors({   
     origin: [
         process.env.AUTH_SERVICE_URL,
         process.env.AUTH_SERVICE_URL.replace('http://', 'http://127.0.0.1:'),
