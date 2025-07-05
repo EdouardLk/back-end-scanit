@@ -1,5 +1,5 @@
 
-const logError = require("../utils/error");
+// const logError = require("../utils/error");
 const Template = require("../models/template.model");
 const User =  require("../models/user.model");
 

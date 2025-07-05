@@ -38,22 +38,26 @@ exports.getUserById = async (req, res) => {
 exports.getUserByEmail = async (req, res) => {
   try {
 
-    let isAutorized = (req.user.role == "admin" || req.user.role == "moderator" || req.user.id == req.params.id); // depuis le token
-
-    if (!isAutorized) {
-      return res.status(401).json({ message: "Unauthorized : Cet Utilisateur n'est pas autorisé à accéder au information d'un autre utilisateur" });
+    if(req.user !== undefined && req.user !== null){
+      let isAutorized = (req.user.role == "admin" || req.user.role == "moderator" || req.user.id == req.params.id); // depuis le token
+      
+      if (!isAutorized) {
+        return res.status(401).json({ message: "Unauthorized : Cet Utilisateur n'est pas autorisé à accéder au information d'un autre utilisateur" });
+      }      
     }
-
-    const user = await User.findOne({ email: req.params.email });
+    //console.log(req.user);
+    
+    const user = await User.findOne({ email: decodeURIComponent(req.params.email) });
     if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
     res.status(200).json(user);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: error.message });
   }
 };
 
 
-exports.login = async (req, res) => { // cette routes doit être appelée par le auth service. Sinon aaucun token ne sera généré
+exports.login = async (req, res) => { // cette routes doit être appelée par le auth service. Sinon aucun token ne sera généré
   const { email, password } = req.body;
 
   try {
@@ -96,25 +100,34 @@ exports.login = async (req, res) => { // cette routes doit être appelée par le
 // Créer un nouvel utilisateur
 exports.createUser = async (req, res) => {
   try {
-    const { email, password, ...rest } = req.body;
 
-    const existingUser = await User.findOne({ email: email });
+    //d'abord déterminer si on c'est une création classique ou qui vient de google    
+      
+      const { email, password, ...rest } = req.body; 
+      //console.log(req.body);
+      
+      //console.log(email);
+      
+      const existingUser = await User.findOne({ email: email });
 
-    if (existingUser) return res.status(409).json({ message: 'CONFLICT : Cet Email est déjà utilisé' });
+      if (existingUser) return res.status(409).json({ message: 'CONFLICT : Cet Email est déjà utilisé' });
+      
+      // Hasher le mot de passe
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // CORRECTION : Il est important d'inclure l'email ici, sinon on aurait l'erreur
+      // "users validation failed: email: Path `email` is required"
+      const newUser = new User({
+        ...rest,
+        email,
+        password: hashedPassword
+      });
+      
+      console.log('user : ' + newUser);
 
-    // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // CORRECTION : Il est important d'inclure l'email ici, sinon on aurait l'erreur
-    // "users validation failed: email: Path `email` is required"
-    const newUser = new User({
-      ...rest,
-      email,
-      password: hashedPassword
-    });
-
-    await newUser.save();
-    res.status(201).json(newUser);
+      await newUser.save();
+      res.status(201).json(newUser);      
+    
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
