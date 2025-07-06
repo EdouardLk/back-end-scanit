@@ -120,17 +120,17 @@ exports.createUser = async (req, res) => {
 
     //console.log('user : ' + newUser);
 
-    await newUser.save();    
+    await newUser.save();
 
     //Maintenant gestion de l'envoi d'un mail de confirmation de compte
-    if (newUser) {      
-      
+    if (newUser) {
+
       const response = await fetch(`${process.env.AUTH_SERVICE_URL}/email/confirm/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email : newUser.email,
-          id : newUser._id
+          email: newUser.email,
+          id: newUser._id
         })
       });
 
@@ -152,44 +152,42 @@ exports.createUser = async (req, res) => {
 
 //méthode qui serà utiliser pour actuliser l'état "isVerified d'un user"
 exports.verifyUserMail = async (req, res) => {
-  // faire une requête vers le auth service pour vérifier si le token est toujours valide
 
   try {
-
-    const response = await fetch(`${process.env.AUTH_SERVICE_URL}/email/verifyToken`, {
+    // faire une requête vers le auth service pour vérifier si le token est toujours valide
+    await fetch(`${process.env.AUTH_SERVICE_URL}/email/verifyToken/${req.params.token}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${req.body}` },
-      //body: JSON.stringify({})
-      // récupéré le token décodé pour le obtenir l'id et le mettre dans la requête de changement de statut
-    });
+      headers: { 'Content-Type': 'application/json' },
+    }).then(async (authResponse) => {
 
-    if (!response.ok) {
-      // si non alors , on s'occupe , mentionner que la periode de validité du mail est expiré
-      res.status(401).json({ message: "la periode de validité de ce mail est expiré" })
-      //console.log("ici");
-      throw new Error(`Response status: ${response.status}`);
-    } else {
-      //si oui alors actualise le is verified a true
-      console.log(response.data);
-      // const updatedUser = await User.findByIdAndUpdate(
-      //   userId,
-      //   { isVerified: true },
-      //   { new: true } // pour retourner l'utilisateur mis à jour
-      // );
+      if (authResponse.status == 200) {
+        // récupérer le token décodé pour obtenir l'id et le mettre dans la requête de changement d'actualisation (findByIdAndUpdate)
+        const json = await authResponse.json(); // ✅ On parse la réponse JSON
+        const userId = json.user.id;
 
-      // if (!updatedUser) {
-      //   return res.status(404).json({ message: 'Utilisateur non trouvé' });
-      // }
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          { isVerified: true },
+          { new: true } // pour retourner l'utilisateur mis à jour
+        );
 
-      res.status(200).json({ message: 'Utilisateur vérifié avec succès', user: updatedUser });
+        if (!updatedUser) {
+          return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
 
-    }
+        res.status(200).json({ message: 'Utilisateur vérifié avec succès', user: updatedUser });
+      } else {
 
+        res.status(403).json({ message: "La periode de validité de ce mail est expiré" });
+      }
+    }).catch((err) => {
+
+      res.status(500).json({ message: err.message || "erreur serveur" })
+    })
 
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
-
 }
 
 // Mettre à jour un utilisateur
