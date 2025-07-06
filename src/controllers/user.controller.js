@@ -86,6 +86,7 @@ exports.login = async (req, res) => { // cette routes doit être appelée par le
         phone: user.phone,
         role: user.role, // admin / moderator / paysans (user) lol
         tier: user.tier, // Correction : on utilise le champ tier au lieu de l'email
+        isVerified : user.isVerified
       },
       //token : token
     });
