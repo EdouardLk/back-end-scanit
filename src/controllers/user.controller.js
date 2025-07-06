@@ -38,15 +38,15 @@ exports.getUserById = async (req, res) => {
 exports.getUserByEmail = async (req, res) => {
   try {
 
-    if(req.user !== undefined && req.user !== null){
+    if (req.user !== undefined && req.user !== null) {
       let isAutorized = (req.user.role == "admin" || req.user.role == "moderator" || req.user.id == req.params.id); // depuis le token
-      
+
       if (!isAutorized) {
         return res.status(401).json({ message: "Unauthorized : Cet Utilisateur n'est pas autorisé à accéder au information d'un autre utilisateur" });
-      }      
+      }
     }
     //console.log(req.user);
-    
+
     const user = await User.findOne({ email: decodeURIComponent(req.params.email) });
     if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
     res.status(200).json(user);
@@ -101,37 +101,96 @@ exports.login = async (req, res) => { // cette routes doit être appelée par le
 exports.createUser = async (req, res) => {
   try {
 
-    //d'abord déterminer si on c'est une création classique ou qui vient de google    
-      
-      const { email, password, ...rest } = req.body; 
-      //console.log(req.body);
-      
-      //console.log(email);
-      
-      const existingUser = await User.findOne({ email: email });
+    const { email, password, ...rest } = req.body;
 
-      if (existingUser) return res.status(409).json({ message: 'CONFLICT : Cet Email est déjà utilisé' });
+    const existingUser = await User.findOne({ email: email });
+
+    if (existingUser) return res.status(409).json({ message: 'CONFLICT : Cet Email est déjà utilisé' });
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // CORRECTION : Il est important d'inclure l'email ici, sinon on aurait l'erreur
+    // "users validation failed: email: Path `email` is required"
+    const newUser = new User({
+      ...rest,
+      email,
+      password: hashedPassword
+    });
+
+    //console.log('user : ' + newUser);
+
+    await newUser.save();    
+
+    //Maintenant gestion de l'envoi d'un mail de confirmation de compte
+    if (newUser) {      
       
-      // Hasher le mot de passe
-      const hashedPassword = await bcrypt.hash(password, 10);
-      
-      // CORRECTION : Il est important d'inclure l'email ici, sinon on aurait l'erreur
-      // "users validation failed: email: Path `email` is required"
-      const newUser = new User({
-        ...rest,
-        email,
-        password: hashedPassword
+      const response = await fetch(`${process.env.AUTH_SERVICE_URL}/email/confirm/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email : newUser.email,
+          id : newUser._id
+        })
       });
-      
-      console.log('user : ' + newUser);
 
-      await newUser.save();
-      res.status(201).json(newUser);      
-    
+      if (!response.ok) {
+        console.log("Echec de la requête vers le auth service");
+        throw new Error(`Response status: ${response.status}`);
+      } else {
+
+        console.log(response.message);
+      }
+    }
+
+    res.status(201).json(newUser);
+
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
+
+//méthode qui serà utiliser pour actuliser l'état "isVerified d'un user"
+exports.verifyUserMail = async (req, res) => {
+  // faire une requête vers le auth service pour vérifier si le token est toujours valide
+
+  try {
+
+    const response = await fetch(`${process.env.AUTH_SERVICE_URL}/email/verifyToken`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${req.body}` },
+      //body: JSON.stringify({})
+      // récupéré le token décodé pour le obtenir l'id et le mettre dans la requête de changement de statut
+    });
+
+    if (!response.ok) {
+      // si non alors , on s'occupe , mentionner que la periode de validité du mail est expiré
+      res.status(401).json({ message: "la periode de validité de ce mail est expiré" })
+      //console.log("ici");
+      throw new Error(`Response status: ${response.status}`);
+    } else {
+      //si oui alors actualise le is verified a true
+      console.log(response.data);
+      // const updatedUser = await User.findByIdAndUpdate(
+      //   userId,
+      //   { isVerified: true },
+      //   { new: true } // pour retourner l'utilisateur mis à jour
+      // );
+
+      // if (!updatedUser) {
+      //   return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      // }
+
+      res.status(200).json({ message: 'Utilisateur vérifié avec succès', user: updatedUser });
+
+    }
+
+
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+
+}
 
 // Mettre à jour un utilisateur
 exports.updateUser = async (req, res) => {
