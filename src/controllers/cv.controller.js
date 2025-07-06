@@ -89,17 +89,26 @@ exports.getCVsByUserId = async (req, res) => {
 // Créer un nouveau CV
 exports.createCV = async (req, res) => {
     try {
-        //console.log("in")
+        console.log('Données reçues pour la création du CV:', req.body);
+        
         const newCV = new CV({
             name: req.body.name,
             content: req.body.content,
+            score: {
+                ats: req.body.scores.ats || 0,
+                readability: req.body.scores.readability || 0,
+                overall: req.body.scores.overall || 0
+            },
+            status: req.body.status || 'completed',
             AIGenerated: req.body.AIGenerated || false,
-            userId: req.body.userId // transmis directement
+            userId: req.body.userId
         });
 
+        console.log('CV à sauvegarder:', newCV);
         await newCV.save();
         res.status(201).json(newCV);
     } catch (error) {
+        console.error('Erreur lors de la création du CV:', error);
         res.status(400).json({ message: error.message });
     }
 };
@@ -148,36 +157,42 @@ exports.getUserCVStats = async (req, res) => {
     try {
         const userId = req.user.id; // depuis le token
         
-        // Récupérer tous les CV complétés de l'utilisateur
-        const cvs = await CV.find({ 
-            userId,
-            status: 'completed'
-        });
+        console.log('=== Calcul des statistiques ===');
+        
+        // Récupérer tous les CV de l'utilisateur (sans filtre de status)
+        const allCVs = await CV.find({ userId });
+        console.log('Tous les CVs:', allCVs);
+        
+        // Récupérer les CV complétés
+        const completedCVs = allCVs.filter(cv => cv.status === 'completed');
+        console.log('CVs complétés:', completedCVs);
         
         // Calculer le nombre total d'analyses
-        const totalAnalyses = cvs.length;
+        const totalAnalyses = completedCVs.length;
         
         // Calculer le nombre d'analyses des 30 derniers jours
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
-        const recentCVs = cvs.filter(cv => 
+        const recentCVs = completedCVs.filter(cv => 
             new Date(cv.createdAt) >= thirtyDaysAgo
         );
         const recentAnalyses = recentCVs.length;
         
         // Calculer le score moyen
-        const averageScore = cvs.length > 0
+        const averageScore = completedCVs.length > 0
             ? Math.round(
-                cvs.reduce((sum, cv) => sum + (cv.score.overall || 0), 0) / cvs.length
+                completedCVs.reduce((sum, cv) => sum + (cv.score.overall || 0), 0) / completedCVs.length
               )
             : 0;
 
-        // Obtenir les dernières analyses
+        // Obtenir les dernières analyses (tous les statuts)
         const recentAnalysesList = await CV.find({ userId })
             .sort({ createdAt: -1 })
             .limit(5)
             .select('name score status createdAt');
+        
+        console.log('Liste des analyses récentes:', recentAnalysesList);
         
         res.status(200).json({
             totalAnalyses,

@@ -22,12 +22,6 @@ const CVSchema = new mongoose.Schema({
       max: 100,
       default: 0
     },
-    keywords: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 0
-    },
     overall: {
       type: Number,
       min: 0,
@@ -80,15 +74,13 @@ const CVSchema = new mongoose.Schema({
 // Méthode pour calculer le score global
 CVSchema.methods.calculateOverallScore = function() {
   const weights = {
-    ats: 0.4,        // 40% du score
-    readability: 0.3, // 30% du score
-    keywords: 0.3    // 30% du score
+    ats: 0.6,        // 60% du score
+    readability: 0.4, // 40% du score
   };
 
   this.score.overall = Math.round(
     this.score.ats * weights.ats +
-    this.score.readability * weights.readability +
-    this.score.keywords * weights.keywords
+    this.score.readability * weights.readability
   );
 
   return this.score.overall;
