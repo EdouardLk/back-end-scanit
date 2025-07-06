@@ -6,6 +6,7 @@ const authenticateToken = require("../middlewares/auth.middleware");
 
 // Définition des routes [Ne pas modifier l'ordre]
 router.get("/all", authenticateToken, cvController.getAllCVs);
+router.get("/stats", authenticateToken, cvController.getUserCVStats);
 router.get("/user", authenticateToken, cvController.getCVsByUserId);
 router.get("/:id", authenticateToken, cvController.getCVById);
 

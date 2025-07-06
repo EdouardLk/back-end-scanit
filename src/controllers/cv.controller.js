@@ -142,3 +142,51 @@ exports.deleteCV = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Obtenir les statistiques des CV d'un utilisateur
+exports.getUserCVStats = async (req, res) => {
+    try {
+        const userId = req.user.id; // depuis le token
+        
+        // Récupérer tous les CV complétés de l'utilisateur
+        const cvs = await CV.find({ 
+            userId,
+            status: 'completed'
+        });
+        
+        // Calculer le nombre total d'analyses
+        const totalAnalyses = cvs.length;
+        
+        // Calculer le nombre d'analyses des 30 derniers jours
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const recentCVs = cvs.filter(cv => 
+            new Date(cv.createdAt) >= thirtyDaysAgo
+        );
+        const recentAnalyses = recentCVs.length;
+        
+        // Calculer le score moyen
+        const averageScore = cvs.length > 0
+            ? Math.round(
+                cvs.reduce((sum, cv) => sum + (cv.score.overall || 0), 0) / cvs.length
+              )
+            : 0;
+
+        // Obtenir les dernières analyses
+        const recentAnalysesList = await CV.find({ userId })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('name score status createdAt');
+        
+        res.status(200).json({
+            totalAnalyses,
+            recentAnalyses,
+            averageScore,
+            recentAnalysesList
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
