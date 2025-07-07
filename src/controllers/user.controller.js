@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // Obtenir tous les utilisateurs // peut être utile si jamais back office
 exports.getAllUsers = async (req, res) => {
@@ -101,32 +102,25 @@ exports.login = async (req, res) => { // cette routes doit être appelée par le
 // Créer un nouvel utilisateur
 exports.createUser = async (req, res) => {
   try {
-
     const { email, password, ...rest } = req.body;
 
     const existingUser = await User.findOne({ email: email });
-
     if (existingUser) return res.status(409).json({ message: 'CONFLICT : Cet Email est déjà utilisé' });
 
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // CORRECTION : Il est important d'inclure l'email ici, sinon on aurait l'erreur
-    // "users validation failed: email: Path `email` is required"
     const newUser = new User({
       ...rest,
       email,
       password: hashedPassword
     });
 
-    //console.log('user : ' + newUser);
-
     await newUser.save();
 
-    //Maintenant gestion de l'envoi d'un mail de confirmation de compte
-    if (newUser) {
-
-      const response = await fetch(`${process.env.AUTH_SERVICE_URL}/email/confirm/`, {
+    // Tentative d'envoi d'email de confirmation
+    try {
+      const response = await fetch(`${process.env.AUTH_SERVICE_URL}/email/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -136,17 +130,19 @@ exports.createUser = async (req, res) => {
       });
 
       if (!response.ok) {
-        console.log("Echec de la requête vers le auth service");
-        throw new Error(`Response status: ${response.status}`);
-      } else {
-
-        console.log(response.message);
+        console.log("Échec de l'envoi du mail de confirmation. L'utilisateur a été créé mais devra vérifier son email plus tard.");
+        // On continue sans erreur car l'utilisateur est créé
       }
+    } catch (emailError) {
+      console.error("Erreur lors de l'envoi du mail de confirmation:", emailError);
+      // On continue sans erreur car l'utilisateur est créé
     }
 
+    // On renvoie toujours 201 si l'utilisateur est créé, même si l'email échoue
     res.status(201).json(newUser);
 
   } catch (error) {
+    // Cette erreur ne devrait survenir que si la création de l'utilisateur échoue
     res.status(400).json({ message: error.message });
   }
 };
@@ -246,4 +242,63 @@ exports.deleteUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    // Vérifier le token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Mettre à jour l'utilisateur
+    const user = await User.findByIdAndUpdate(
+      decoded.id,
+      { isVerified: true },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+
+    // Retourner l'utilisateur mis à jour
+    return res.status(200).json({
+      message: "Email vérifié avec succès",
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userName: user.userName,
+        credits: user.credits,
+        phone: user.phone,
+        role: user.role,
+        tier: user.tier,
+        isVerified: user.isVerified
+      }
+    });
+
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(400).json({ message: "Token invalide" });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({ message: "Le lien a expiré" });
+    }
+    console.error('Erreur lors de la vérification de l\'email:', error);
+    return res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+module.exports = {
+  getAllUsers: exports.getAllUsers,
+  getUserById: exports.getUserById,
+  getUserByEmail: exports.getUserByEmail,
+  login: exports.login,
+  createUser: exports.createUser,
+  verifyUserMail: exports.verifyUserMail,
+  updateUser: exports.updateUser,
+  deleteUser: exports.deleteUser,
+  verifyEmail: exports.verifyEmail
 };

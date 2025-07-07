@@ -9,6 +9,7 @@ router.get('/', authenticateToken, userController.getAllUsers);
 router.get('/:id', authenticateToken, userController.getUserById);
 router.get('/byEmail/:email', userController.getUserByEmail);
 router.get('/email/confirm/:token', userController.verifyUserMail);
+router.get('/verify/:token', userController.verifyEmail);
 
 router.post('/login', userController.login); //route à appeler seulement depuis AuthService !!
 router.post('/create', userController.createUser); //register

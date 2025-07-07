@@ -1,40 +1,53 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const UserSchema = new mongoose.Schema({
-  firstName: { 
+const userSchema = new Schema({
+  email: {
     type: String,
-     required: true
-   },
-  lastName: { 
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true
+  },
+  password: {
     type: String,
-     required: true
-   },
-  userName: { 
+    required: true
+  },
+  firstName: {
     type: String,
-     required: true, unique: true
-   },
-  email: { 
+    required: true,
+    trim: true
+  },
+  lastName: {
     type: String,
-     required: true, unique: true
-   },
-  password: { 
+    required: true,
+    trim: true
+  },
+  userName: {
     type: String,
-     required: true
-   },
-  credits: { 
+    required: true,
+    unique: true,
+    trim: true
+  },
+  credits: {
     type: Number,
-     required: true,
-     default: 0
-   },
-  phone: { 
+    default: 0
+  },
+  phone: {
     type: String,
-     required: true
-   },
-  role: { 
+    required: true,
+    trim: true
+  },
+  role: {
     type: String,
-     required: true,
-     enum: ['user', 'admin', 'moderator'],
-     default: 'user' },
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  tier: {
+    type: String,
+    enum: ['freemium', 'premium', 'enterprise'],
+    default: 'freemium'
+  },
   isVerified: {
     type: Boolean,
     default: false
@@ -42,12 +55,9 @@ const UserSchema = new mongoose.Schema({
   isGoogleUser: {
     type: Boolean,
     default: false
-  },
-  tier: { 
-    type: String,
-     required: true,
-     enum: ['freemium', 'premium' , 'ultra'],
-     default: 'freemium' }
-}, { timestamps: true });
+  }
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('users', UserSchema);
+module.exports = mongoose.model('User', userSchema);
