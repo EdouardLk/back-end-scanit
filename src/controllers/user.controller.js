@@ -12,8 +12,8 @@ exports.getAllUsers = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized : Cet Utilisateur n'est pas autoriser à accéder à cette donnée" });
     }
     const users = await User.find({});
-    res.status(200).json(users);
   } catch (error) {
+    res.status(200).json(users);
     res.status(500).json({ message: error.message });
   }
 };
@@ -120,7 +120,8 @@ exports.createUser = async (req, res) => {
 
     // Tentative d'envoi d'email de confirmation
     try {
-      const response = await fetch(`${process.env.AUTH_SERVICE_URL}/email/confirm`, {
+
+      const response = await fetch(`${process.env.NOTIFICATION_SERVICE_URL}/email/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,7 +160,7 @@ exports.verifyUserMail = async (req, res) => {
 
       if (authResponse.status == 200) {
         // récupérer le token décodé pour obtenir l'id et le mettre dans la requête de changement d'actualisation (findByIdAndUpdate)
-        const json = await authResponse.json(); // ✅ On parse la réponse JSON
+        const json = await authResponse.json();
         const userId = json.user.id;
 
         const updatedUser = await User.findByIdAndUpdate(
