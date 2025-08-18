@@ -13,6 +13,7 @@ router.get('/verify/:token', userController.verifyEmail);
 
 router.post('/login', userController.login); //route à appeler seulement depuis AuthService !!
 router.post('/create', userController.createUser); //register
+router.post('/buyCredits/:id', userController.grantCreditsUser); // Achats de crédits
 
 router.put('/:id', authenticateToken, userController.updateUser);
 
