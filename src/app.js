@@ -42,12 +42,14 @@ const userRoutes = require('./routes/user.routes');
 const templateRoutes = require('./routes/template.routes');
 const templateUserRoutes = require('./routes/templateUser.routes');
 const cvRoutes = require('./routes/cv.routes');
+const applicationRoutes = require('./routes/application.routes');
 
 
 app.use('/api/users', userRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/templatesUsers', templateUserRoutes);
 app.use('/api/cv', cvRoutes);
+app.use('/api/applications', applicationRoutes);
 
 app.get("/api/ping", (req, res) => {
     res.json({message :"✅ Serveur Express fonctionne !"});
