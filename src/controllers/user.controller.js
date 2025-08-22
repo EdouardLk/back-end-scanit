@@ -87,7 +87,7 @@ exports.login = async (req, res) => { // cette routes doit être appelée par le
         phone: user.phone,
         role: user.role, // admin / moderator / paysans (user) lol
         tier: user.tier, // Correction : on utilise le champ tier au lieu de l'email
-        isVerified : user.isVerified
+        isVerified: user.isVerified
       },
       //token : token
     });
@@ -102,26 +102,32 @@ exports.login = async (req, res) => { // cette routes doit être appelée par le
 // Créer un nouvel utilisateur
 exports.createUser = async (req, res) => {
   try {
+
     const { email, password, ...rest } = req.body;
 
     const existingUser = await User.findOne({ email: email });
+
     if (existingUser) return res.status(409).json({ message: 'CONFLICT : Cet Email est déjà utilisé' });
 
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // CORRECTION : Il est important d'inclure l'email ici, sinon on aurait l'erreur
+    // "users validation failed: email: Path `email` is required"
     const newUser = new User({
       ...rest,
       email,
       password: hashedPassword
     });
 
+    //console.log('user : ' + newUser);
+
     await newUser.save();
 
-    // Tentative d'envoi d'email de confirmation
-    try {
+    //Maintenant gestion de l'envoi d'un mail de confirmation de compte
+    if (newUser) {
 
-      const response = await fetch(`${process.env.NOTIFICATION_SERVICE_URL}/email/confirm`, {
+      const response = await fetch(`${process.env.AUTH_SERVICE_URL}/email/confirm/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -131,19 +137,17 @@ exports.createUser = async (req, res) => {
       });
 
       if (!response.ok) {
-        console.log("Échec de l'envoi du mail de confirmation. L'utilisateur a été créé mais devra vérifier son email plus tard.");
-        // On continue sans erreur car l'utilisateur est créé
+        console.log("Echec de la requête vers le auth service");
+        throw new Error(`Response status: ${response.status}`);
+      } else {
+
+        console.log(response.message);
       }
-    } catch (emailError) {
-      console.error("Erreur lors de l'envoi du mail de confirmation:", emailError);
-      // On continue sans erreur car l'utilisateur est créé
     }
 
-    // On renvoie toujours 201 si l'utilisateur est créé, même si l'email échoue
     res.status(201).json(newUser);
 
   } catch (error) {
-    // Cette erreur ne devrait survenir que si la création de l'utilisateur échoue
     res.status(400).json({ message: error.message });
   }
 };
@@ -248,10 +252,10 @@ exports.deleteUser = async (req, res) => {
 exports.verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
-    
+
     // Vérifier le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Mettre à jour l'utilisateur
     const user = await User.findByIdAndUpdate(
       decoded.id,
@@ -292,6 +296,47 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
+exports.addCredits = async (req, res) => {
+  try {
+
+    //console.log(req.body);
+
+    let updateData = {
+      credits: 0,
+      tier: null
+    };
+
+    if (req.body.productName == "Premium") {
+      updateData.credits = 200; 
+      updateData.tier = "premium";
+    }
+    else {
+      updateData.credits = 500;
+      updateData.tier = "entreprise";
+    }
+
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.body.userId,
+      { 
+        $inc: { credits: updateData.credits },
+        $set: { tier: updateData.tier }         
+      },
+      { new: true } // retourne l’utilisateur mis à jour
+    );
+
+    if (!updatedUser) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+
+    // à compléter en envoyant un mail via le serveur de notifications
+
+    res.status(200).json({ message: "crédits ajouté avec succes", user: updatedUser })
+
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+
+}
+
 module.exports = {
   getAllUsers: exports.getAllUsers,
   getUserById: exports.getUserById,
@@ -301,5 +346,6 @@ module.exports = {
   verifyUserMail: exports.verifyUserMail,
   updateUser: exports.updateUser,
   deleteUser: exports.deleteUser,
-  verifyEmail: exports.verifyEmail
+  verifyEmail: exports.verifyEmail,
+  addCredits: exports.addCredits
 };

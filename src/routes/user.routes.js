@@ -14,6 +14,7 @@ router.get('/verify/:token', userController.verifyEmail);
 router.post('/login', userController.login); //route à appeler seulement depuis AuthService !!
 router.post('/create', userController.createUser); //register
 
+router.put('/buyCredits', authenticateToken, userController.addCredits); // Achats de crédits
 router.put('/:id', authenticateToken, userController.updateUser);
 
 router.delete('/:id', authenticateToken, userController.deleteUser);
