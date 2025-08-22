@@ -87,7 +87,7 @@ exports.login = async (req, res) => { // cette routes doit être appelée par le
         phone: user.phone,
         role: user.role, // admin / moderator / paysans (user) lol
         tier: user.tier, // Correction : on utilise le champ tier au lieu de l'email
-        isVerified : user.isVerified
+        isVerified: user.isVerified
       },
       //token : token
     });
@@ -252,10 +252,10 @@ exports.deleteUser = async (req, res) => {
 exports.verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
-    
+
     // Vérifier le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Mettre à jour l'utilisateur
     const user = await User.findByIdAndUpdate(
       decoded.id,
@@ -296,26 +296,44 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
-exports.grantCreditsUser = async (req, res) => {
+exports.addCredits = async (req, res) => {
+  try {
 
-  let premOrUltra = req.body.product;
-  let credits = null; 
-  (premOrUltra == "premium") ? credits = 200 : credits = 500 ; // ultra = 500 cred;
+    //console.log(req.body);
 
-  console.log(premOrUltra);
-  console.log(credits);
-  console.log(req.params.id);
+    let updateData = {
+      credits: 0,
+      tier: null
+    };
 
-  const user = await User.findById(req.params.id);
-  let userCredits = user.credits;
+    if (req.body.productName == "Premium") {
+      updateData.credits = 200; 
+      updateData.tier = "premium";
+    }
+    else {
+      updateData.credits = 500;
+      updateData.tier = "entreprise";
+    }
 
-  const updatedUser = await User.findByIdAndUpdate(
-          req.params.id,
-          { credits : userCredits + credits },
-          { new: true } // pour retourner l'utilisateur mis à jour
-        );
 
-  res.status(201).json({ message : "crédits ajouté avec succes", user : updatedUser })
+    const updatedUser = await User.findByIdAndUpdate(
+      req.body.userId,
+      { 
+        $inc: { credits: updateData.credits },
+        $set: { tier: updateData.tier }         
+      },
+      { new: true } // retourne l’utilisateur mis à jour
+    );
+
+    if (!updatedUser) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+
+    // à compléter en envoyant un mail via le serveur de notifications
+
+    res.status(200).json({ message: "crédits ajouté avec succes", user: updatedUser })
+
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
 
 }
 
@@ -329,5 +347,5 @@ module.exports = {
   updateUser: exports.updateUser,
   deleteUser: exports.deleteUser,
   verifyEmail: exports.verifyEmail,
-  grantCreditsUser : exports.grantCreditsUser
+  addCredits: exports.addCredits
 };
