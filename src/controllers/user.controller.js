@@ -109,6 +109,16 @@ exports.createUser = async (req, res) => {
 
     if (existingUser) return res.status(409).json({ message: 'CONFLICT : Cet Email est déjà utilisé' });
 
+    // Vérification de la force du mot de passe
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/;
+
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message:
+          "Le mot de passe doit contenir au minimum : une majuscule, une minuscule, un chiffre et un caractère spécial."
+      });
+    }
+
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
