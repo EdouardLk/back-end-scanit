@@ -15,6 +15,7 @@ router.post('/login',sanitizeHtml, userController.login); //route à appeler seu
 router.post('/create', sanitizeHtml, userController.createUser); //register
 
 router.put('/buyCredits', authenticateToken, userController.addCredits); // Achats de crédits
+router.put('/spendCredits', authenticateToken, userController.spendCredits);
 router.put('/:id', sanitizeHtml ,authenticateToken, userController.updateUser);
 
 router.delete('/:id', authenticateToken, userController.deleteUser);
