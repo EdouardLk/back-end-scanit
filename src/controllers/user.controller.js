@@ -128,7 +128,7 @@ exports.createUser = async (req, res) => {
       ...rest,
       email,
       password: hashedPassword,
-      credits : 100
+      credits : 50
     });
 
     //console.log('user : ' + newUser);
@@ -351,8 +351,8 @@ exports.spendCredits = async (req, res) => {
   console.log("in");
   try {
     const userId = req.body.userId;
-    const cost = 50; // coût d'une analyse
-        
+    const cost = 10; // coût d'une analyse
+
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
 
@@ -368,8 +368,8 @@ exports.spendCredits = async (req, res) => {
     await user.save();
 
     res.status(200).json({
-      message: "50 crédits ont été retirés",
-      user
+      message: "10 crédits ont été dépensés",
+      credits : user.credits
     });
 
   } catch (err) {
